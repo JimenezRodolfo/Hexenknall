@@ -1,0 +1,131 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 7bc50843a6c8870ab75bc076fcf15ff5, type: 3}
+  m_Name: HexenknallPresentation
+  m_EditorClassIdentifier: Assembly-CSharp::Labyrinth.PresentationCatalog
+  titleVideo: {fileID: 32900000, guid: db5506f8facab0e498b74e12c2eea843, type: 3}
+  gameOverVideo: {fileID: 32900000, guid: 319b8bd9557dbce459fb85581c2da5b4, type: 3}
+  menuShader: {fileID: 4800000, guid: 9ccf3a28646c5b5a80deb473bd9ffdc5, type: 3}
+  magicShader: {fileID: 4800000, guid: 6741c646ef2e5a6680c2653c5d55211c, type: 3}
+  titleMusic: {fileID: 8300000, guid: 5f2da0465ff4eee4692fb80a3437f048, type: 3}
+  combatMusic: {fileID: 8300000, guid: 31ccbb2cc9d03804498dc04dd0660851, type: 3}
+  bossMusic: {fileID: 8300000, guid: 8ceb6377ef9a0cd4ab8b53478c774281, type: 3}
+  bossDialogueMusic: {fileID: 8300000, guid: 0c2be020ea5ed414a82c7775684af5a6, type: 3}
+  bossDeathMusic: {fileID: 8300000, guid: 25bd0dd514fbfd446bec89391ba934fc, type: 3}
+  cardMusic: {fileID: 8300000, guid: ee6c34ce5fafdf041a5874b9345e99a3, type: 3}
+  gameOverMusic: {fileID: 8300000, guid: 07657a2ac739282499ef561613282fdb, type: 3}
+  oldFriendMusic: {fileID: 8300000, guid: 95813f035197d3b4fae4a3393ed1b77c, type: 3}
+  oneLifeMusic: {fileID: 8300000, guid: 83f80fa8fc7bb2c498a356077b95b868, type: 3}
+  creditsMusic: {fileID: 8300000, guid: bdc04bd5d3cafa54487703c33200ca83, type: 3}
+  sounds:
+  - cue: 0
+    clip: {fileID: 8300000, guid: 5e529b014e405a51bbe2de10e2ce0453, type: 3}
+    volume: 1
+  - cue: 1
+    clip: {fileID: 8300000, guid: 39cc67b118e15e49a06d98fbf3381bff, type: 3}
+    volume: 1
+  - cue: 2
+    clip: {fileID: 8300000, guid: aaacaf2d5f8051be90a69106257fa11d, type: 3}
+    volume: 1
+  - cue: 3
+    clip: {fileID: 8300000, guid: 00258fb5bb2b540489ba07e99cbe72d5, type: 3}
+    volume: 1
+  - cue: 4
+    clip: {fileID: 8300000, guid: fe90082779ed5b53940bd5d3be03b649, type: 3}
+    volume: 1
+  - cue: 5
+    clip: {fileID: 8300000, guid: 8ec410fe69aa55eab56f73f13dda6e3f, type: 3}
+    volume: 1
+  - cue: 6
+    clip: {fileID: 8300000, guid: 6295c6ebceb1593ca099a43e38930eee, type: 3}
+    volume: 1
+  - cue: 7
+    clip: {fileID: 8300000, guid: 88b3a798a7075e82a1eb3181eef7bf85, type: 3}
+    volume: 1
+  - cue: 8
+    clip: {fileID: 8300000, guid: 53678ef996ea54a0920e2035a0e353c7, type: 3}
+    volume: 1
+  - cue: 9
+    clip: {fileID: 8300000, guid: dc37623d4ea95e588ac31a221cce67e4, type: 3}
+    volume: 1
+  - cue: 10
+    clip: {fileID: 8300000, guid: ce53b5796cc653299b2687dc3cbf80b4, type: 3}
+    volume: 1
+  - cue: 11
+    clip: {fileID: 8300000, guid: c0a0b19dba5a5056b72160da5cce399e, type: 3}
+    volume: 1
+  - cue: 12
+    clip: {fileID: 8300000, guid: 8583aecf442e5e8094182072215eebf7, type: 3}
+    volume: 1
+  - cue: 13
+    clip: {fileID: 8300000, guid: 82e3b49118a55f27a10d8b4147249213, type: 3}
+    volume: 1
+  - cue: 14
+    clip: {fileID: 8300000, guid: 88a0fd6970d45dd387f1e8cc53088ecd, type: 3}
+    volume: 1
+  - cue: 15
+    clip: {fileID: 8300000, guid: c948882db1745477bfb703b89c7e822a, type: 3}
+    volume: 1
+  - cue: 16
+    clip: {fileID: 8300000, guid: 130dd5e388af591fb8ddd8ede63a8d84, type: 3}
+    volume: 1
+  - cue: 17
+    clip: {fileID: 8300000, guid: 94235023ebe75d76bd949c707341ec85, type: 3}
+    volume: 1
+  - cue: 18
+    clip: {fileID: 8300000, guid: 52421d7807b053a1b3f5882d440df768, type: 3}
+    volume: 1
+  - cue: 19
+    clip: {fileID: 8300000, guid: 1dd0a0f50fae59019787f49776a7955c, type: 3}
+    volume: 1
+  - cue: 20
+    clip: {fileID: 8300000, guid: 725c4aa3ded85af18b935ce0cdbe7587, type: 3}
+    volume: 1
+  - cue: 21
+    clip: {fileID: 8300000, guid: 831f11846e665aab8cb34cedcc27ead5, type: 3}
+    volume: 1
+  - cue: 22
+    clip: {fileID: 8300000, guid: 8f7f8fa4e4ee5d9e9029ebc360a0929b, type: 3}
+    volume: 1
+  - cue: 23
+    clip: {fileID: 8300000, guid: ed856d84608c52938df91fade1d5caa5, type: 3}
+    volume: 1
+  - cue: 24
+    clip: {fileID: 8300000, guid: e72688cc275c5faa90da814e063e2788, type: 3}
+    volume: 1
+  - cue: 25
+    clip: {fileID: 8300000, guid: 6b43b339a4525fc099e657276d654852, type: 3}
+    volume: 1
+  - cue: 26
+    clip: {fileID: 8300000, guid: bc7840fc3b525e7f8cc75b3cff841c88, type: 3}
+    volume: 1
+  - cue: 27
+    clip: {fileID: 8300000, guid: 67adb3d5d56c58c88b87a4a95bdcfc1a, type: 3}
+    volume: 1
+  - cue: 28
+    clip: {fileID: 8300000, guid: 724aa45a38c25b84a016ced94548e02f, type: 3}
+    volume: 1
+  - cue: 29
+    clip: {fileID: 8300000, guid: 18b0a77a06835211bb4b37ed7073620a, type: 3}
+    volume: 1
+  - cue: 30
+    clip: {fileID: 8300000, guid: cb94820f2eeb5fabba2047843c4e9261, type: 3}
+    volume: 1
+  redWarningCircle: {fileID: 0}
+  normalCircle: {fileID: 0}
+  rayCircle: {fileID: 0}
+  rayBeam: {fileID: 0}
+  skyCircle: {fileID: 0}
+  skyBeam: {fileID: 0}
+  portal: {fileID: 0}
+  particles: 0.65
+  hudShake: 4

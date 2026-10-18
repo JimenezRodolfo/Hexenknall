@@ -1,0 +1,317 @@
+{
+  "entries": [
+    {
+      "id": "PrologueBoss.opening",
+      "lines": [
+        {
+          "speaker": "???",
+          "text": "... Donde estoy?...."
+        },
+        {
+          "speaker": "Narrador",
+          "text": "Muros altos se alzan y caen a tu alrededor, estas confundido, quien eres?, porque estas aqui?"
+        },
+        {
+          "speaker": "Guardian",
+          "text": "Ponte en postura maga"
+        },
+        {
+          "speaker": "???",
+          "text": "Que? Quien eres tu?... Alejate!"
+        },
+        {
+          "speaker": "Guardian",
+          "text": "Tantos reinicios te hicieron perder la cabeza?, no importa, te enviare de vuelta cuantas veces sean necesarias!"
+        }
+      ]
+    },
+    {
+      "id": "PrologueBoss.closing",
+      "lines": [
+        {
+          "speaker": "Guardian",
+          "text": "Realmente perdiste el cerebro...."
+        },
+        {
+          "speaker": "???",
+          "text": "ngh...!."
+        },
+        {
+          "speaker": "Guardian",
+          "text": "Eres patetica Kate..."
+        }
+      ]
+    },
+    {
+      "id": "Level01.opening",
+      "lines": [
+        {
+          "speaker": "Narrador",
+          "text": "Despiertas en un ambiente similar, sientes que el cuerpo te pesa, aun mas que antes"
+        },
+        {
+          "speaker": "Kate?",
+          "text": "Que demonios fue eso?, que clase de persona ataca de esa manera a una desconocida..."
+        },
+        {
+          "speaker": "Ecos del laberinto",
+          "text": "Z traza un círculo. Al terminar un nivel, elige una bendición y una maldición de la misma rareza."
+        }
+      ]
+    },
+    {
+      "id": "Level04.opening",
+      "lines": [
+        {
+          "speaker": "Kate?",
+          "text": "Este lugar no me gusta nada... todos esos mounstros, los muros cambian... que se supone que hice para terminar aca?."
+        }
+      ]
+    },
+    {
+      "id": "OldFriendRoom.opening",
+      "lines": [
+        {
+          "speaker": "Kate?",
+          "text": "Que lugar tan.... tranquilo..."
+        },
+        {
+          "speaker": "Kate?",
+          "text": "Esa persona... se ve tan... familiar"
+        }
+      ]
+    },
+    {
+      "id": "OldFriend.intro",
+      "lines": [
+        {
+          "speaker": "???",
+          "text": "Fufufu... mi prisionera favorita volvio..."
+        },
+        {
+          "speaker": "Kate?",
+          "text": "Prisionera? quien eres tu, no me gusta tu vibra..."
+        },
+        {
+          "speaker": "???",
+          "text": "..."
+        },
+        {
+          "speaker": "???",
+          "text": "Ya veo... realmente estas perdiendo la cabeza Kate..."
+        },
+        {
+          "speaker": "Kate",
+          "text": "Y a ti que te importa?!"
+        },
+        {
+          "speaker": "???",
+          "text": "Me importas demasiado, por eso puedo escucharte incluso desde ahi..."
+        },
+        {
+          "speaker": "???",
+          "text": "Estoy segura de que me recordaras en algun momento, por ahora cumplire mi promesa, debo de ayudarte..."
+        }
+      ]
+    },
+    {
+      "id": "OldFriend.after",
+      "lines": [
+        {
+          "speaker": "???",
+          "text": "Cuidate... Kate... y vuelve a mi"
+        },
+        {
+          "speaker": "Kate",
+          "text": "Loca...."
+        }
+      ]
+    },
+    {
+      "id": "FinalBoss.opening",
+      "lines": [
+        {
+          "speaker": "Guardian",
+          "text": "Hmmm... realmente eres idiota Kate... tardaste mucho en volver esta vez..."
+        },
+        {
+          "speaker": "Kate",
+          "text": "Callate idiota... no se quien demonios eres, pero pienso vengarme por lo de la ultima vez!"
+        },
+        {
+          "speaker": "Guardian",
+          "text": "Sin memorias, perdida y confundida"
+        },
+        {
+          "speaker": "Guardian",
+          "text": "Y aun asi me irritas, sigues siendo la misma tonta!"
+        }
+      ]
+    },
+    {
+      "id": "FinalBoss.closing",
+      "lines": [
+        {
+          "speaker": "Guardian",
+          "text": "guh!... asi que... porfin lo lograste..."
+        },
+        {
+          "speaker": "Kate",
+          "text": "Pienso salir de aqui, moriste por cruzarte en mi camino..."
+        },
+        {
+          "speaker": "Guardian",
+          "text": "Heh...."
+        },
+        {
+          "speaker": "Guardian",
+          "text": "HAHAHAHAHAHA!"
+        },
+        {
+          "speaker": "Narrador",
+          "text": "La mujer rie fuertemente mientras se desangra"
+        },
+        {
+          "speaker": "Guardian",
+          "text": "Parece ser que nunca cambiaras... esa siempre fue tu naturaleza..."
+        },
+        {
+          "speaker": "Guardian",
+          "text": "Aveces deseo volver al pasado... dejar de ser una guardiana de esta prision asquerosa..."
+        },
+        {
+          "speaker": "Guardian",
+          "text": "... y volver con Natasha y Tu..."
+        },
+        {
+          "speaker": "Narrador",
+          "text": "La mujer deja de respirar y cae completamente"
+        },
+        {
+          "speaker": "Kate",
+          "text": "..."
+        },
+        {
+          "speaker": "Kate",
+          "text": "Prision..."
+        },
+        {
+          "speaker": "Ecos del laberinto",
+          "text": "Otro portal fue abierto, avance a la siguiente capa"
+        },
+        {
+          "speaker": "Narrador",
+          "text": "Kate cruza el portal, a otra capa mas de esta Prision, insegura de si podra escapar algun dia"
+        }
+      ]
+    },
+    {
+      "id": "OldFriend.result",
+      "lines": [
+        {
+          "speaker": "???",
+          "text": "Está hecho. Estos pactos ya no te acompañan:"
+        },
+        {
+          "speaker": "???",
+          "text": "{removed}"
+        },
+        {
+          "speaker": "???",
+          "text": "El portal te llevará al quinto laberinto. Cuida lo que todavía conservas."
+        }
+      ]
+    },
+    {
+      "id": "Level01.closing",
+      "lines": []
+    },
+    {
+      "id": "Level02.opening",
+      "lines": [
+        {
+          "speaker": "Kate?",
+          "text": "Cada portal me deja en un lugar peor que el anterior..."
+        }
+      ]
+    },
+    {
+      "id": "Level02.closing",
+      "lines": []
+    },
+    {
+      "id": "Level03.opening",
+      "lines": [
+        {
+          "speaker": "Kate?",
+          "text": "Los muros estan cambiando... debo de apresurarme"
+        }
+      ]
+    },
+    {
+      "id": "Level03.closing",
+      "lines": []
+    },
+    {
+      "id": "Level04.closing",
+      "lines": []
+    },
+    {
+      "id": "Level05.opening",
+      "lines": [
+        {
+          "speaker": "Kate",
+          "text": "...solo avanza, olvida eso, continua y sal de aca Kate"
+        }
+      ]
+    },
+    {
+      "id": "Level05.closing",
+      "lines": []
+    },
+    {
+      "id": "Level06.opening",
+      "lines": [
+      ]
+    },
+    {
+      "id": "Level06.closing",
+      "lines": []
+    },
+    {
+      "id": "Level07.opening",
+      "lines": [
+      ]
+    },
+    {
+      "id": "Level07.closing",
+      "lines": []
+    },
+    {
+      "id": "Level08.opening",
+      "lines": [
+      ]
+    },
+    {
+      "id": "Level08.closing",
+      "lines": []
+    },
+    {
+      "id": "Level09.opening",
+      "lines": [
+        {
+          "speaker": "Kate",
+          "text": "Puedo sentirla en el siguiente nivel..."
+        },
+        {
+          "speaker": "Kate",
+          "text": "Me vengare, y avanzare a como de lugar!..."
+        }
+      ]
+    },
+    {
+      "id": "Level09.closing",
+      "lines": []
+    }
+  ]
+}
