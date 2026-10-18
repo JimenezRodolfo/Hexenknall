@@ -1,0 +1,1 @@
+Los paquetes originales de Fab/Unity no están incluidos. El juego usa efectos propios mientras los campos del catálogo estén vacíos. Importa los paquetes obtenidos por ti y crea aquí contenedores de prefab. Asigna los campos con HEXENKNALL > Select sound and VFX slots. Consulta Documentation/GUIA_MODIFICACION_v05.md para orientación, escala y enlaces.

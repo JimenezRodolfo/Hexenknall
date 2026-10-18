@@ -1,0 +1,27 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 0d1c91627780e71948c881602c573270, type: 3}
+  m_Name: LabyrinthArt
+  m_EditorClassIdentifier: Assembly-CSharp::Labyrinth.ArtCatalog
+  player: {fileID: 8122392250771130940, guid: ca3bda8b2f003f04cac2e3fdaac8db30, type: 3}
+  melee: {fileID: 1847830537619042363, guid: e962cf92fbb3b884095751ad00016460, type: 3}
+  bomber: {fileID: 1162676760019425529, guid: cfd2fd28d8739124db10eb7b37d6e8d4, type: 3}
+  boss: {fileID: 3618401830970001517, guid: 9465f1cda636824489d0a482639fb2f1, type: 3}
+  wall: {fileID: 4408482187675572410, guid: 796fe299c75b00a40a2031720f405851, type: 3}
+  crate: {fileID: 4213688722140468908, guid: 337296f402ae2fc42a4de748c635f3dc, type: 3}
+  oldFriend: {fileID: 6801980730455184130, guid: b1b45a3e919bee74a952278bf8980b48, type: 3}
+  floor: {fileID: 2100000, guid: 73811b8546a53f04c8b89032b4819cd3, type: 2}
+  stone: {fileID: 2100000, guid: 458f60da1942ae34489a14e2fa9e1f46, type: 2}
+  trim: {fileID: 2100000, guid: c7925cdedd4df464b8315a7e75e0031e, type: 2}
+  crystal: {fileID: 2100000, guid: e4235ec05c0689e4cbc54258df0e586e, type: 2}
+  foliage: {fileID: 2100000, guid: 7a44977875e872348822dfeba5f9fac8, type: 2}
+  metal: {fileID: 2100000, guid: 09086a17c8f35c942b461064824340b0, type: 2}
