@@ -20,14 +20,17 @@ namespace Labyrinth
         public Material floorMaterial;
         public int PendingWaves=>waves;
         public int PendingExpansions=>expansionEnabled ? Mathf.Max(0, maxExpansions-expansions) : 0;
-        public bool HasPendingWork=>waves>0 || busy || (expansionEnabled && expansions<maxExpansions) ||
-            (FeriaSession.Active && dynamicStage && index == 0);
+        public bool HasPendingWork=>waves>0 || busy || (expansionEnabled && expansions<maxExpansions);
         float elapsed, stageTime;
         bool busy;
         int index, expansions;
         GameDirector G=>GameDirector.I;
         float WallDuration=>Mathf.Max(.35f, wallMoveDuration/(1+RunProgress.Data.wallHaste));
 
+        void Start()
+        {
+            if (DifficultyRules.IsEasy) { expansionAmount=DifficultyRules.EasyExpansion; maxExpansions=Mathf.Min(1,maxExpansions); warningTime=Mathf.Max(1.3f,warningTime); }
+        }
         // Controla cuándo ocurre un evento.
         void Update()
         {
@@ -149,7 +152,7 @@ namespace Labyrinth
                 else G.ui.Toast("Cambio aplazado: la casilla está ocupada o es un paso necesario.");
             }
             var camera = Camera.main?Camera.main.GetComponent<OrbitCamera>():null;
-            if (camera && FeriaSession.RotateCamera)
+            if (camera && DifficultyRules.RotateCamera)
             {
                 camera.angle+=90;
                 camera.elevation = index%2 == 0?52:62;

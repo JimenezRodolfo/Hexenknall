@@ -105,8 +105,8 @@ namespace Labyrinth
         {
             switch (e)
             {
-                case CardEffect.UnlockRay: return !d.rayUnlocked;
-                case CardEffect.UnlockSpecial: return !d.specialUnlocked;
+                case CardEffect.UnlockRay: return !Ray(d);
+                case CardEffect.UnlockSpecial: return !Special(d);
                 case CardEffect.Life: return d.lifeBonus<8;
                 case CardEffect.Speed: return d.speedBonus<.799f;
                 case CardEffect.Immunity: return d.immunityBonus<1.199f;
@@ -114,9 +114,9 @@ namespace Labyrinth
                 case CardEffect.BombRadius: return d.bombRadiusBonus<5;
                 case CardEffect.BombDamage: return false;
                 case CardEffect.BombCapacity: return d.bombCapacityBonus<6;
-                case CardEffect.RayRange: return d.rayUnlocked && d.rayRangeBonus<5;
+                case CardEffect.RayRange: return Ray(d) && d.rayRangeBonus<5;
                 case CardEffect.RayDamage: return false;
-                case CardEffect.SpecialRadius: return d.specialUnlocked && d.specialRadiusBonus<5;
+                case CardEffect.SpecialRadius: return Special(d) && d.specialRadiusBonus<5;
                 case CardEffect.EnemyHealth: return false;
                 case CardEffect.EnemySpeed: return d.enemySpeedBonus<.799f;
                 case CardEffect.EnemyDamage: return false;
@@ -129,6 +129,9 @@ namespace Labyrinth
             }
         }
 
+        static bool EasyPowers(RunData d)=>d.easyReward || (Application.isPlaying && DifficultyRules.IsEasy);
+        static bool Ray(RunData d)=>d.rayUnlocked || (EasyPowers(d) && d.rewardStage>=1);
+        static bool Special(RunData d)=>d.specialUnlocked || (EasyPowers(d) && d.rewardStage>=2);
         // Selecciona las cartas disponibles.
         public static List<CardOffer> Roll(RunData d, bool curse, Rarity rarity =  Rarity.Common)
         {
@@ -136,9 +139,9 @@ namespace Labyrinth
             foreach (CardEffect e in Enum.GetValues(typeof(CardEffect))) if (((int)e >= (int)CardEffect.EnemyHealth) == curse && Eligible(e, d)) pool.Add(e);
             var cards =  new List<CardOffer>();
             // Permite recuperar un poder sin obligar a elegirlo.
-            if (!curse && (!d.rayUnlocked || !d.specialUnlocked))
+            if (!curse && (!Ray(d) || !Special(d)))
             {
-                var e =  !d.rayUnlocked && !d.specialUnlocked ? (UnityEngine.Random.value<.5f?CardEffect.UnlockRay:CardEffect.UnlockSpecial) : (!d.rayUnlocked?CardEffect.UnlockRay:CardEffect.UnlockSpecial);
+                var e =  !Ray(d) && !Special(d) ? (UnityEngine.Random.value<.5f?CardEffect.UnlockRay:CardEffect.UnlockSpecial) : (!Ray(d)?CardEffect.UnlockRay:CardEffect.UnlockSpecial);
                 cards.Add(new CardOffer(e, RollRarity(), false));
                 pool.Remove(e);
             }

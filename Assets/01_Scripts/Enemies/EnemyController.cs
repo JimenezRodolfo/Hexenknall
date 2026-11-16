@@ -21,6 +21,7 @@ namespace Labyrinth
         [Header("Golpe cuerpo a cuerpo")]
         public float meleeWindup = .28f, meleeReach = 1.04f;
         float decideAt, attackAt, bombAt, patternAt, baseSpeed, swingAt;
+        float easyPatternUntil;
         int bombRadius = 2;
         bool swinging;
         BossCombat bossCombat;
@@ -36,6 +37,14 @@ namespace Labyrinth
         protected override void Start()
         {
             var d = RunProgress.Data;
+            if (DifficultyRules.IsEasy)
+            {
+                speed *= DifficultyRules.EasyEnemySpeed;
+                meleeWindup = Mathf.Max(DifficultyRules.EasyWindup, meleeWindup);
+                reactionMin = DifficultyRules.EasyReactionMin; reactionMax = DifficultyRules.EasyReactionMax;
+                phaseSpeedIncrease = 0;
+            }
+
             if (GameDirector.I.stage>0)
             {
                 if (!boss)maxHealth+=d.enemyHealthBonus;
@@ -53,16 +62,6 @@ namespace Labyrinth
                 if (!bossCombat)bossCombat = gameObject.AddComponent<BossCombat>();
                 bossCombat.Bind(this);
             }
-            if (FeriaSession.Accessible)
-            {
-                var profile = GameDirector.I;
-                speed *= profile.accessibleEnemySpeed;
-                meleeWindup = Mathf.Max(profile.accessibleWindup, meleeWindup);
-                reactionMin = profile.accessibleReactionMin;
-                reactionMax = profile.accessibleReactionMax;
-                bombCooldown = Mathf.Max(5, bombCooldown);
-                phaseSpeedIncrease = 0;
-            }
             baseSpeed = speed;
             base.Start();
         }
@@ -73,12 +72,13 @@ namespace Labyrinth
             base.Update();
             var g = GameDirector.I;
             if (!g || !g.Combat || !g.player || g.player.health<=0)return;
-            if (g.Training || g.EncounterGrace)return;
+            if (g.EncounterGrace)return;
             if (health<=0)
             {
                 state = State.Dead;
                 return;
             }
+            if (DifficultyRules.IsEasy && Time.time<easyPatternUntil)return;
             if (bossCombat && bossCombat.Tick())
             {
                 CancelSwing();
@@ -121,11 +121,13 @@ namespace Labyrinth
             if (boss)
             {
                 speed = baseSpeed+phase*phaseSpeedIncrease;
-                if (!FeriaSession.Accessible && phase>0 && Time.time>=patternAt)
+                if (phase>0 && Time.time>=patternAt && (!DifficultyRules.IsEasy || (g.board.bombs.Count==0 && g.board.hazards.Count==0)))
                 {
                     patternAt = Time.time+patternCooldown;
-                    g.StartCoroutine(g.Telegraph(g.player.cell, patternWarning, 1));
+                    float warning=DifficultyRules.IsEasy ? Mathf.Max(DifficultyRules.EasyBossWarning,patternWarning) : patternWarning;
+                    g.StartCoroutine(g.Telegraph(g.player.cell, warning, 1));
                     if (visual)visual.Play("CastArea", .5f, true);
+                    if (DifficultyRules.IsEasy) { easyPatternUntil=Time.time+warning+.4f+DifficultyRules.EasyBossRecovery;return; }
                 }
             }
             if (CanMelee(g.player))

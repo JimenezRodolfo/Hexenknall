@@ -11,13 +11,15 @@ namespace Labyrinth
         public int radius = 2, damage = 1;
         public GridActor owner;
         public bool special;
+        public bool playerOwned;
+        public ExplosionContext explosion;
         bool detonated;
         float placedAt;
         GameObject ownership;
         readonly List<GameObject> forecast = new List<GameObject>();
         readonly HashSet<Vector2Int> forecastCells = new HashSet<Vector2Int>();
         float nextForecast;
-        bool Friendly => owner && owner.player;
+        bool Friendly => playerOwned || (owner && owner.player);
         public float Age=>Mathf.Max(0, Time.time-placedAt);
         public float Remaining=>Mathf.Max(0, fuse-Age);
         void Awake()
@@ -46,7 +48,7 @@ namespace Labyrinth
         void Update()
         {
             var g = GameDirector.I;
-            if (!g || !FeriaSession.Accessible || Time.time < nextForecast)return;
+            if (!g || !DifficultyRules.IsEasy || Time.time < nextForecast)return;
             nextForecast = Time.time+.12f;
             var cells = g.board.Blast(cell, radius);
             if (forecastCells.SetEquals(cells))return;
@@ -81,19 +83,23 @@ namespace Labyrinth
             var g = GameDirector.I;
             if (!g || !g.board)return;
             detonated = true;
+            playerOwned = Friendly;
+            if (explosion == null)explosion=new ExplosionContext();
+            explosion.bombs++;
+            if (explosion.bombs>1 && g.feedback)g.feedback.Chain(cell);
             var board = g.board;
             // Guarda los obstáculos antes de romper bloques o activar otra bomba.
             var cells = board.Blast(cell, radius);
             board.bombs.Remove(cell);
-            if (hitActors == null)hitActors = new HashSet<GridActor>();
+            if (hitActors == null)hitActors = explosion.hits;
             foreach (var p in cells)
             {
-                if (board.blocks.TryGetValue(p, out var block))block.Break(special);
+                if (board.blocks.TryGetValue(p, out var block))block.Break(special,playerOwned);
                 g.Flash(p, special?Color.cyan:new Color(1, .48f, .13f), 0.38f, damage, true, hitActors, special?MagicKind.Sky:MagicKind.Normal,
-                    Friendly ? "Explosión de una bomba propia (puede haber reacción en cadena)." : "Explosión de una bomba rival (puede haber reacción en cadena).");
+                    Friendly ? "Explosión de una bomba propia (puede haber reacción en cadena)." : "Explosión de una bomba rival (puede haber reacción en cadena).", playerOwned, explosion);
             }
-            foreach (var p in cells)if(board.bombs.TryGetValue(p, out var other))other.Detonate(hitActors);
-            if (g.sound)g.sound.Play(special?SoundCue.SkyImpact:SoundCue.CircleRelease);
+            foreach (var p in cells)if(board.bombs.TryGetValue(p, out var other)) { other.explosion=explosion; other.Detonate(hitActors); }
+            if (g.sound && explosion.bombs==1)g.sound.Play(special?SoundCue.SkyImpact:SoundCue.CircleRelease);
             Destroy(gameObject);
         }
     }

@@ -11,6 +11,8 @@ namespace Labyrinth
         public int damage = 1;
         public bool bombDamage;
         public string cause;
+        public bool playerOwned;
+        public ExplosionContext explosion;
         // Todas las casillas del mismo rayo comparten el registro de daño.
         public HashSet<GridActor> hitActors = new HashSet<GridActor>();
         GridBoard board;
@@ -43,8 +45,7 @@ namespace Labyrinth
                 if (!a || !a.isActiveAndEnabled || a.health<=0 || (!bombDamage && a.player) || hitActors.Contains(a))continue;
                 // Solo revisa movimientos hechos mientras la llama estaba activa.
                 if (!a.OverlapsDamageCell(cell, .44f, Time.frameCount>bornFrame))continue;
-                hitActors.Add(a);
-                a.Hit(damage, bombDamage, cause);
+                ApplyTo(a);
             }
             duration-=Time.deltaTime;
             if (duration<=0)Destroy(gameObject);
@@ -58,9 +59,15 @@ namespace Labyrinth
             if (!g || !g.Combat || duration<=0 || !a || a.health<=0 || (!bombDamage && a.player) || hitActors.Contains(a))return;
             if (a.OverlapsDamageCell(cell, .44f))
             {
-                hitActors.Add(a);
-                a.Hit(damage, bombDamage, cause);
+                ApplyTo(a);
             }
+        }
+        public bool ApplyTo(GridActor actor)
+        {
+            if (!actor || actor.health<=0 || hitActors.Contains(actor) || DifficultyRules.IgnoreOwnBomb(actor.player,bombDamage,playerOwned))return false;
+            // La explosión propia inocua NO consume el registro compartido de una cadena mixta.
+            hitActors.Add(actor);
+            return actor.Hit(damage,bombDamage,cause,playerOwned,explosion);
         }
         void OnDestroy()
         {

@@ -24,21 +24,13 @@ namespace Labyrinth
         float nextRay, nextSpecial, nextNormal, nextAim;
         bool bombQueued, rayQueued, aimQueued;
         GameObject marker;
-        bool shield;
-        public bool ConsumeShield()
-        {
-            if (!shield)return false;
-            shield = false;
-            GameDirector.I.ui.Toast("Escudo consumido: has evitado un golpe.");
-            GameDirector.I.sound.Play(SoundCue.CardChoose);
-            return true;
-        }
         int baseHealth, baseNormalRadius, baseCapacity, baseRayRange, baseSpecialRadius;
-        float baseSpeed, baseImmunity, baseRayCooldown, baseSpecialCooldown;
+        float baseSpeed, baseImmunity, baseRayCooldown, baseSpecialCooldown, baseFuse, baseCharge, baseSpecialFuse;
 
         // Guarda los valores base del personaje.
         protected override void Start()
         {
+            baseFuse=normalFuse; baseCharge=chargeTime; baseSpecialFuse=specialFuse;
             baseHealth = maxHealth;
             baseSpeed = speed;
             baseImmunity = invulnerability;
@@ -50,7 +42,6 @@ namespace Labyrinth
             baseSpecialCooldown = specialCooldown;
             RefreshRunBonuses();
             health = maxHealth;
-            shield = FeriaSession.Active && RunProgress.Data.shieldChosen;
             base.Start();
         }
 
@@ -60,32 +51,29 @@ namespace Labyrinth
             var g = GameDirector.I;
             var d = RunProgress.Data;
             bool adventure = g.stage>0;
-            RayUnlocked = g.stage == 0 || d.rayUnlocked;
-            SpecialUnlocked = g.stage == 0 || d.specialUnlocked;
-            if (FeriaSession.Active)
-            {
-                RayUnlocked = g.stage != 1 || FeriaSession.Lesson >= 1;
-                SpecialUnlocked = g.stage == Campaign.FinalBoss;
-            }
-            maxHealth = (FeriaSession.Accessible ? g.accessibleHealth : baseHealth)+(adventure?d.lifeBonus:0);
+            bool easy=DifficultyRules.IsEasy;
+            RayUnlocked = DifficultyRules.RayAvailable(d,g.stage,easy);
+            SpecialUnlocked = DifficultyRules.SpecialAvailable(d,g.stage,easy);
+            maxHealth = (easy ? DifficultyRules.EasyHealth : baseHealth)+(adventure?d.lifeBonus:0);
+            normalFuse=easy ? DifficultyRules.EasyZFuse : baseFuse;
+            chargeTime=easy ? DifficultyRules.EasyXCharge : baseCharge;
+            specialFuse=easy ? DifficultyRules.EasyCFuse : baseSpecialFuse;
             health = Mathf.Min(health, maxHealth);
             speed = baseSpeed*(adventure?Mathf.Max(.35f, 1+d.speedBonus-d.playerSlow):1);
-            invulnerability = baseImmunity+(adventure?d.immunityBonus:0);
+            invulnerability = (easy ? Mathf.Max(DifficultyRules.EasyImmunity,baseImmunity) : baseImmunity)+(adventure?d.immunityBonus:0);
             normalRadius = baseNormalRadius+(adventure?d.bombRadiusBonus:0);
             maxBombs = baseCapacity+(adventure?d.bombCapacityBonus:0);
             rayRange = baseRayRange+(adventure?d.rayRangeBonus:0);
             specialRadius = baseSpecialRadius+(adventure?d.specialRadiusBonus:0);
             float factor = adventure?Mathf.Max(.3f, 1-d.cooldownReduction+d.cooldownPenalty):1;
-            rayCooldown = baseRayCooldown*factor;
-            specialCooldown = baseSpecialCooldown*factor;
+            rayCooldown = (easy ? DifficultyRules.EasyXCooldown : baseRayCooldown)*factor;
+            specialCooldown = (easy ? DifficultyRules.EasyCCooldown : baseSpecialCooldown)*factor;
             if (!SpecialUnlocked)CancelAim();
             ClearQueuedActions();
         }
-        // Clave histórica conservada: solo orienta controles, no modifica el balance.
-        // 0 = cámara; 1 = ejes del tablero.
-        public const string DifficultyPrefKey = "HEXENKNALL.Difficulty";
-        public static int Difficulty=>FeriaSession.Active ? 0 : Mathf.Clamp(PlayerPrefs.GetInt(DifficultyPrefKey, 1), 0, 1);
-        public static string DifficultyName=>Difficulty == 0?"SEGÚN CÁMARA":"EJES DEL TABLERO";
+        public const string DifficultyPrefKey = DifficultyRules.LegacyKey;
+        public static int Difficulty=>DifficultyRules.Active;
+        public static string DifficultyName=>DifficultyRules.Name(Difficulty);
 
         // Lee las teclas y adapta la dirección a la dificultad.
         public static Vector2Int Direction()
@@ -97,7 +85,7 @@ namespace Labyrinth
             else if(k.sKey.isPressed || k.downArrowKey.isPressed)input = Vector2Int.down;
             else if(k.aKey.isPressed || k.leftArrowKey.isPressed)input = Vector2Int.left;
             else if(k.dKey.isPressed || k.rightArrowKey.isPressed)input = Vector2Int.right;
-            if (input == Vector2Int.zero || Difficulty != 0)return input;
+            if (input == Vector2Int.zero || !DifficultyRules.RelativeControls)return input;
             // Usamos la orientacion REAL de la camara, no el angulo objetivo,
             // para adaptar movimiento y apuntado mientras se anima la rotacion.
             var cam = Camera.main;
@@ -129,16 +117,16 @@ namespace Labyrinth
                 return;
             }
             // Lee las teclas incluso durante el movimiento entre casillas.
-            if (k.zKey.wasPressedThisFrame)bombQueued = true;
+            if (k.zKey.wasPressedThisFrame) { if (Time.time>=nextNormal)bombQueued=true; else g.ui.Toast("Z está recargando."); }
             if (k.xKey.wasPressedThisFrame)
             {
                 if (RayUnlocked && RayRemaining<=0)rayQueued = true;
-                else if(!RayUnlocked)g.ui.Toast("X bloqueada: recupera el rayo con una carta.");
+                else g.ui.Toast(RayUnlocked ? "X está recargando." : "X bloqueada: recupera el rayo con una carta.");
             }
             if (k.cKey.wasPressedThisFrame)
             {
                 if (SpecialUnlocked && SpecialRemaining<=0)aimQueued = true;
-                else if(!SpecialUnlocked)g.ui.Toast("C bloqueada: recupera la invocación celeste con una carta.");
+                else g.ui.Toast(SpecialUnlocked ? "C está recargando." : "C bloqueada: disponible desde Level03 en Fácil o mediante una carta.");
             }
             if (Moving)return;
             var direction = Direction();
@@ -151,17 +139,15 @@ namespace Labyrinth
                 else if(g.PlaceBomb(cell, normalFuse, normalRadius, normalDamage, this))
                 {
                     nextNormal = Time.time+placementCooldown;
-                    FeriaSession.UsedZ();
-                    if (FeriaSession.Active)RayUnlocked = true;
                     if (visual)visual.Play("PlaceBomb", .3f, true);
                 }
+                else g.ui.Toast("Z: casilla ocupada o inválida.");
             }
             if (rayQueued)
             {
                 rayQueued = false;
                 nextRay = Time.time+rayCooldown;
                 MagicSeal.Create(g, cell, facing, chargeTime, rayRange, rayDamage);
-                FeriaSession.UsedX();
                 if (visual)visual.Play("CastSeal", .4f, true);
             }
             if (aimQueued)
@@ -199,13 +185,13 @@ namespace Labyrinth
             }
             marker.transform.position = g.board.World(target, .1f);
             MagicVfx.SetColor(marker, ValidTarget()?MagicVfx.ColorFor(MagicKind.Sky):Color.gray);
+            if ((k.enterKey.wasPressedThisFrame || k.spaceKey.wasPressedThisFrame) && !ValidTarget())g.ui.Toast("C: elige una casilla libre de muro y bomba.");
             if ((k.enterKey.wasPressedThisFrame || k.spaceKey.wasPressedThisFrame) && ValidTarget())
             {
                 if (g.PlaceBomb(target, specialFuse, specialRadius, specialDamage, this, true))
                 {
                     g.sound.Play(SoundCue.AimConfirm);
                     nextSpecial = Time.time+specialCooldown;
-                    FeriaSession.UsedC();
                     CancelAim();
                     if (visual)visual.Play("CastSpecial", .45f, true);
                 }

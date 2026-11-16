@@ -146,21 +146,19 @@ namespace Labyrinth
         }
 
         // Descuenta vida y activa la reacción al golpe.
-        public bool Hit(int damage = 1, bool bombDamage = false, string cause = null)
+        public bool Hit(int damage = 1, bool bombDamage = false, string cause = null, bool playerOwned = false, ExplosionContext explosion = null)
         {
+            if (DifficultyRules.IgnoreOwnBomb(player,bombDamage,playerOwned))return false;
             if (damage<=0 || health<=0 || invincible || Time.time<immuneUntil || (bombDamage && !receiveBombDamage))return false;
             if (player && GameDirector.I && GameDirector.I.EncounterGrace)return false;
-            if (player && this is PlayerController protectedPlayer && protectedPlayer.ConsumeShield())
-            {
-                immuneUntil = Time.time+invulnerability;
-                return false;
-            }
             if (player && GameDirector.I)GameDirector.I.deathCause = cause ?? "";
             health = Mathf.Max(0, health-damage);
             immuneUntil = Time.time+invulnerability;
             var g = GameDirector.I;
-            if (g && g.sound)g.sound.Play(player?(health == 0?SoundCue.PlayerDeath:SoundCue.PlayerHit):(health == 0?SoundCue.EnemyDeath:SoundCue.EnemyHit));
+            if (g && g.sound && (player || !g.feedback))g.sound.Play(player?(health == 0?SoundCue.PlayerDeath:SoundCue.PlayerHit):(health == 0?SoundCue.EnemyDeath:SoundCue.EnemyHit));
             if (player && g && g.ui)g.ui.ShakeHUD();
+            if (g && g.feedback)g.feedback.Impact(this,health==0);
+            if (health==0 && explosion!=null)explosion.Kill(this,playerOwned);
             if (health == 0)
             {
                 Moving = false;

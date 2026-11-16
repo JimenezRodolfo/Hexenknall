@@ -55,7 +55,7 @@ namespace Labyrinth
                 {
                     if (block.destructible)
                     {
-                        block.Break(true);
+                        block.Break(true,true);
                         g.Flash(p, Color.cyan, .3f, damage, false, hits, MagicKind.Ray);
                         end = g.board.World(p, .9f);
                         fired = true;

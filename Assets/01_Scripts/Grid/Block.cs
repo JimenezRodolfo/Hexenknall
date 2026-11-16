@@ -20,7 +20,7 @@ namespace Labyrinth
         }
         // Los ataques Z, X, C y las bombas enemigas rompen cajas.
         // Rompe el bloque si recibe daño suficiente.
-        public bool Break(bool magic = false)
+        public bool Break(bool magic = false, bool playerOwned = false)
         {
             if (!destructible || broken)return false;
             var g = GameDirector.I;
@@ -29,6 +29,7 @@ namespace Labyrinth
             if (g.sound)g.sound.Play(SoundCue.CrateBreak);
             g.board.blocks.Remove(cell);
             gameObject.SetActive(false);
+            if(playerOwned)g.TryDropOrb(cell);
             if (Application.isPlaying)
             {
                 var fx = new GameObject("Fragmentos arcanos").AddComponent<BreakFragments>();

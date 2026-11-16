@@ -8,7 +8,11 @@ namespace Labyrinth
     public class RunData
     {
         public int layoutSeed;
-        public bool shieldChosen;
+        public List<int> introducedStages = new List<int>();
+        public int completedNormalStages;
+        public bool easyReward;
+        public List<CardOffer> pactCosts = new List<CardOffer>();
+        public string lastReward = "";
         public int version = 2, stage;
         public int ledgerRevision;
         public bool oldFriendResolved, oldFriendVisited;
@@ -32,11 +36,16 @@ namespace Labyrinth
     {
         const string Key = "Labyrinth.Run.v2", BackupKey = Key+".backup";
         static RunData data;
+#if UNITY_EDITOR
+        public static RunData TestData;
+#endif
         public static RunData Data
         {
             get
             {
-                if (FeriaSession.Active)return FeriaSession.Data;
+#if UNITY_EDITOR
+                if (TestData != null)return TestData;
+#endif
                 if (data == null)
                 {
                     LegacySaveMigration.TryCopy(Key);
@@ -71,11 +80,13 @@ namespace Labyrinth
         // Corrige datos antiguos o incompletos.
         public static void Normalize(RunData d)
         {
+            if (d.introducedStages == null)d.introducedStages = new List<int>();
+            if (d.pactCosts == null)d.pactCosts = new List<CardOffer>();
             if (d.offers == null)d.offers = new List<CardOffer>();
             if (d.history == null)d.history = new List<string>();
             int completed = 0;
             foreach (string line in d.history)if(line != null && line.StartsWith("Maldición: "))completed++;
-            completed = Mathf.Clamp(completed, 0, Campaign.LastNormal);
+            completed = Mathf.Clamp(Mathf.Max(completed,d.completedNormalStages), 0, Campaign.LastNormal);
             if (d.balanceRevision<3)RemoveDamageModifiers(d);
             if (d.checkpointRevision<4)
             {
@@ -87,7 +98,8 @@ namespace Labyrinth
             }
             if (d.checkpointStage<0 || (d.checkpointStage>Campaign.Ending && d.checkpointStage != Campaign.OldFriend) || (d.checkpointStage == Campaign.Ending && !d.finalBossDefeated)) d.checkpointStage = d.adventureStarted?Mathf.Clamp(completed+1, 1, Campaign.FinalBoss):0;
             if (d.finalBossDefeated)d.checkpointStage = Campaign.Ending;
-            bool pending = d.rewardPhase == 1 || d.rewardPhase == 2;
+            d.completedNormalStages = Mathf.Max(completed, d.checkpointStage>=1 && d.checkpointStage<=Campaign.FinalBoss ? d.checkpointStage-1 : d.checkpointStage == Campaign.OldFriend ? 4 : 0);
+            bool pending = d.rewardPhase == 1 || d.rewardPhase == 2 || (d.rewardPhase == 3 && d.easyReward);
             if (!pending || d.rewardStage<1 || d.rewardStage>Campaign.LastNormal || d.finalBossDefeated)
             {
                 d.rewardPhase = 0;
@@ -99,10 +111,16 @@ namespace Labyrinth
                 d.checkpointStage = d.rewardStage;
                 d.adventureStarted = true;
                 d.chosenRarity = Mathf.Clamp(d.chosenRarity, 0, 3);
-                bool valid = d.offers.Count == 3;
+                bool valid = d.offers.Count > 0 && d.offers.Count <= 3;
                 var used = new HashSet<CardEffect>();
-                foreach (var card in d.offers) if(card == null || CardRules.Removed(card.effect) || !used.Add(card.effect) || card.curse != (d.rewardPhase == 2) || (int)card.rarity<0 || (int)card.rarity>3 || (d.rewardPhase == 2 && (int)card.rarity != d.chosenRarity))valid = false;
+                foreach (var card in d.offers) if(card == null || CardRules.Removed(card.effect) || !CardRules.Eligible(card.effect,d) || !used.Add(card.effect) || card.curse != (d.rewardPhase == 2) || (int)card.rarity<0 || (int)card.rarity>3 || (d.rewardPhase == 2 && (int)card.rarity != d.chosenRarity))valid = false;
                 if (!valid)d.offers = CardRules.Roll(d, d.rewardPhase == 2, (Rarity)d.chosenRarity);
+                if (d.rewardPhase == 3)
+                {
+                    bool costsValid=d.pactCosts.Count==d.offers.Count;
+                    foreach (var cost in d.pactCosts)if(cost==null || !cost.curse || !CardRules.Eligible(cost.effect,d) || CardRules.Removed(cost.effect))costsValid=false;
+                    if (!costsValid)RewardManager.PreparePacts(d);
+                }
             }
             CardLedger.Ensure(d);
             d.stage = d.checkpointStage;
@@ -114,6 +132,8 @@ namespace Labyrinth
         public static void RemoveDamageModifiers(RunData d)
         {
             d.bombDamageBonus = d.rayDamageBonus = d.enemyDamageBonus = 0;
+            if (d.introducedStages == null)d.introducedStages = new List<int>();
+            if (d.pactCosts == null)d.pactCosts = new List<CardOffer>();
             if (d.offers == null)d.offers = new List<CardOffer>();
             if (d.history == null)d.history = new List<string>();
             var used = new HashSet<CardEffect>();
@@ -137,7 +157,9 @@ namespace Labyrinth
         {
             get
             {
-                if (FeriaSession.Active)return false;
+#if UNITY_EDITOR
+                if (TestData != null)return false;
+#endif
                 LegacySaveMigration.TryCopy(Key);
                 return PlayerPrefs.HasKey(Key) || PlayerPrefs.HasKey(BackupKey);
             }
@@ -158,7 +180,9 @@ namespace Labyrinth
         // Guarda el estado actual de la partida.
         public static void Save()
         {
-            if (FeriaSession.Active)return;
+#if UNITY_EDITOR
+            if (TestData != null) { Normalize(TestData); return; }
+#endif
             var d = Data;
             Normalize(d);
             Write(d);
@@ -167,6 +191,9 @@ namespace Labyrinth
         // Reinicia los datos de una partida nueva.
         public static void NewGame()
         {
+#if UNITY_EDITOR
+            if(TestData!=null) { TestData=new RunData { checkpointRevision=4,balanceRevision=3 }; return; }
+#endif
             data = new RunData
             {
                 checkpointRevision = 4, balanceRevision = 3
@@ -181,6 +208,9 @@ namespace Labyrinth
         // Prepara una nueva aventura.
         public static void BeginAdventure()
         {
+#if UNITY_EDITOR
+            if(TestData!=null) { TestData=NewAdventureData(); return; }
+#endif
             data = NewAdventureData();
             Save();
         }
@@ -200,6 +230,7 @@ namespace Labyrinth
             d.stage = d.checkpointStage = clearedStage;
             d.adventureStarted = true;
             d.rewardStage = clearedStage;
+            d.easyReward = DifficultyRules.IsEasy;
             d.rewardPhase = 1;
             d.offers = CardRules.Roll(d, false);
             Save();
@@ -211,7 +242,9 @@ namespace Labyrinth
         }
         public static bool AdvanceAfterReward(RunData d)
         {
-            if (d.rewardPhase != 2 || d.rewardStage<1 || d.rewardStage>Campaign.LastNormal)return false;
+            if ((d.rewardPhase != 2 && !(d.rewardPhase == 3 && d.easyReward)) || d.rewardStage<1 || d.rewardStage>Campaign.LastNormal)return false;
+            d.completedNormalStages = Mathf.Max(d.completedNormalStages,d.rewardStage);
+            d.pactCosts.Clear();
             d.stage = d.checkpointStage = d.rewardStage == 4 && !d.oldFriendVisited?Campaign.OldFriend:d.rewardStage+1;
             d.rewardPhase = 0;
             d.rewardStage = 0;
