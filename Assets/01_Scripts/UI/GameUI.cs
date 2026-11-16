@@ -393,20 +393,6 @@ namespace Labyrinth
             if (!string.IsNullOrEmpty(notice))GUI.Label(new Rect(180, 155, 920, 70), notice, title);
             if (p && p.Aiming)GUI.Label(new Rect(250, 570, 780, 78), "WASD / flechas: apuntar  ·  Enter: invocar  ·  Esc: cancelar\nCírculo violeta: válido. Gris: casilla bloqueada.", center);
             if (g.oldFriend && g.oldFriend.CanTalk)GUI.Label(new Rect(330, 520, 620, 45), "[Z] Hablar con Old Friend", center);
-            if(p && p.health>0 && Camera.main)
-            {
-                // Una referencia sobre los efectos permite localizar al protagonista tras expandir.
-                var point=Camera.main.WorldToScreenPoint(p.Position+Vector3.up*1.1f);
-                if(point.z>0)
-                {
-                    float s=Scale;
-                    float x=(point.x-(Screen.width-1280*s)*.5f)/s;
-                    float y=(Screen.height-point.y-(Screen.height-720*s)*.5f)/s;
-                    var marker=new Rect(x-25,y-18,50,27);
-                    Fill(marker,new Color(.01f,.025f,.04f,.9f));
-                    var color=GUI.color;GUI.color=Color.cyan;GUI.Label(marker,"TÚ",center);GUI.color=color;
-                }
-            }
         }
         string Status(float n)=>n<=0?"LISTO":n.ToString("0.0")+" s";
 
