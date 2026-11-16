@@ -36,6 +36,15 @@ namespace Labyrinth
         public OldFriendRoom oldFriend;
         public bool CanMove=>(Campaign.IsCombat(stage) || stage == Campaign.OldFriend) && !loading && !paused && !dialogue && !finished;
         public bool paused, dialogue, finished;
+        public string deathCause = "";
+        public float accessibleGrace = 2f;
+        [Header("Perfil Accesible (Original conserva valores de prefabs)")]
+        public int accessibleHealth = 5;
+        public float accessibleEnemySpeed = .8f, accessibleWindup = .55f;
+        public float accessibleReactionMin = .65f, accessibleReactionMax = 1f, accessibleAimScale = .2f;
+        [HideInInspector] public bool accessibleProfile;
+        public bool EncounterGrace => FeriaSession.Accessible && elapsed < accessibleGrace;
+        public bool Training => FeriaSession.Active && ((stage == 1 && FeriaSession.Lesson < 2) || (stage == Campaign.FinalBoss && FeriaSession.Lesson < 3));
         public bool Combat=>Campaign.IsCombat(stage) && !loading && !paused && !dialogue && !finished;
         public int Enemies
         {
@@ -61,7 +70,9 @@ namespace Labyrinth
             if (!Application.isPlaying)return;
             if (!SceneRuntimeGuard.Claim(this))return;
             if (Campaign.TryStage(gameObject.scene.name, out var sceneStage))stage = sceneStage;
+            if (stage < 0)FeriaSession.End();
             I = this;
+            accessibleProfile = PlayerPrefs.GetInt("Hexenknall.Balance", 0) == 1;
             Time.timeScale = 1;
             board = GetComponent<GridBoard>();
             ui = GetComponent<GameUI>();
@@ -72,11 +83,35 @@ namespace Labyrinth
                 break;
             }
             foreach (var b in SceneRuntimeGuard.InScene<Block>(gameObject.scene))board.blocks[b.cell] = b;
+            if (FeriaSession.Active)
+            {
+                var events = GetComponent<StageEventManager>();
+                if (events)
+                {
+                    events.expansionEnabled = false;
+                    events.waves = stage == 2 ? 1 : 0;
+                    events.enemiesPerWave = 1;
+                    events.dynamicStage = stage == 2;
+                    events.warningTime = 1.5f;
+                    events.eventInterval = 14;
+                }
+                board.solidDensity = .08f;
+                board.crateDensity = .06f;
+            }
             effectMaterial = effectMaterialAsset?new Material(effectMaterialAsset):new Material(Shader.Find("HEXENKNALL/Prototype"));
             if (!GetComponent<MenuBackdrop>())gameObject.AddComponent<MenuBackdrop>();
             foreach (var root in gameObject.scene.GetRootGameObjects())if(root.name.StartsWith("Floor ") && !root.GetComponent<Collider>())root.AddComponent<BoxCollider>();
             opening = DialogueLibrary.Get(gameObject.scene.name+".opening", opening);
             closing = DialogueLibrary.Get(gameObject.scene.name+".closing", closing);
+            if (FeriaSession.Active)
+            {
+                levelTitle = stage == 1 ? "Primeros hechizos" : stage == 2 ? "El laberinto despierta" : "El último guardián";
+                opening = new[] { "DEMO DE FERIA|" + (stage == 1 ?
+                    "Muévete con WASD o flechas. Z deja una bomba: sal de su cruz. Tus bombas también te dañan. Practica Z y después X; los enemigos esperan." : stage == 2 ?
+                    "Tu carta ya está activa. Los muros avisan antes de cambiar. Aún queda una oleada aunque veas la sala vacía." :
+                    "C invoca una bomba a distancia. Al apuntar el combate se ralentiza: Enter confirma y Esc cancela. Esquiva la línea del jefe y ataca durante su recuperación.") };
+                closing = new string[0];
+            }
             rewards = GetComponent<RewardManager>();
             if (!rewards)rewards = gameObject.AddComponent<RewardManager>();
             if (RunProgress.Data.rewardPhase>0 && RunProgress.Data.rewardStage == stage)finished = true;
@@ -124,7 +159,7 @@ namespace Labyrinth
         void Update()
         {
             if (I != this || loading || !ready || !Combat)return;
-            elapsed+=Time.deltaTime;
+            if (!Training)elapsed+=Time.deltaTime;
             if (stage == 0 && elapsed>=prologueDuration)
             {
                 player.health = 0;
@@ -133,13 +168,13 @@ namespace Labyrinth
                 return;
             }
             var events = GetComponent<StageEventManager>();
-            if (stage>=1 && Enemies == 0 && (events == null || !events.HasPendingWork))StartCoroutine(Win());
+            if (!Training && stage>=1 && Enemies == 0 && (events == null || !events.HasPendingWork))StartCoroutine(Win());
         }
 
         // Pausa o reanuda el tiempo del juego.
         public void SetTime()
         {
-            Time.timeScale = (paused || dialogue || finished)?0:1;
+            Time.timeScale = (paused || dialogue || finished)?0: FeriaSession.Accessible && player && player.Aiming ? Mathf.Clamp(accessibleAimScale, .05f, 1) : 1;
         }
 
         // Cambia a otra escena.
@@ -156,6 +191,7 @@ namespace Labyrinth
         // Comienza una partida nueva.
         public void NewGame()
         {
+            FeriaSession.End();
             RunProgress.NewGame();
             Load("PrologueBoss");
         }
@@ -163,6 +199,7 @@ namespace Labyrinth
         // Retoma la partida guardada.
         public void Continue()
         {
+            FeriaSession.End();
             var d = RunProgress.Data;
             Load(Campaign.Scene(RunProgress.ResumeStage(d)));
         }
@@ -190,10 +227,20 @@ namespace Labyrinth
         // Finaliza el nivel y abre las recompensas.
         IEnumerator Win()
         {
+            if (player)player.CancelAim();
             finished = true;
             SetTime();
             ui.notice = "VICTORIA";
             if (sound)sound.Play(SoundCue.Victory);
+            if (FeriaSession.Active)
+            {
+                yield return new WaitForSecondsRealtime(1.2f);
+                ui.notice = "";
+                if (stage == 1)FeriaSession.Choosing = true;
+                else if (stage == 2)Load("FinalBoss");
+                else FeriaSession.Won = true;
+                yield break;
+            }
             if (stage == Campaign.FinalBoss)RunProgress.CompleteCampaign();
             else RunProgress.PrepareReward(stage);
             yield return new WaitForSecondsRealtime(1.2f);
@@ -238,7 +285,7 @@ namespace Labyrinth
             m.SetColor("_BaseColor", color);
             obj.GetComponent<Renderer>().SetPropertyBlock(m);
         }
-        public void Flash(Vector2Int p, Color color, float duration, int damage, bool isBomb, HashSet<GridActor> hitActors = null, MagicKind kind = MagicKind.Normal)
+        public void Flash(Vector2Int p, Color color, float duration, int damage, bool isBomb, HashSet<GridActor> hitActors = null, MagicKind kind = MagicKind.Normal, string cause = null)
         {
             var obj = new GameObject("Impacto magico");
             obj.transform.position = board.World(p);
@@ -248,6 +295,7 @@ namespace Labyrinth
             h.duration = duration;
             h.damage = damage;
             h.bombDamage = isBomb;
+            h.cause = cause;
             h.hitActors = hitActors;
             if (h.hitActors == null)h.hitActors = new HashSet<GridActor>();
         }
@@ -289,11 +337,11 @@ namespace Labyrinth
         }
         void OnApplicationPause(bool value)
         {
-            if (value && I == this && RunProgress.HasSave)RunProgress.Save();
+            if (value && I == this && stage >= 0 && RunProgress.HasSave)RunProgress.Save();
         }
         void OnApplicationQuit()
         {
-            if (I == this && RunProgress.HasSave)RunProgress.Save();
+            if (I == this && stage >= 0 && RunProgress.HasSave)RunProgress.Save();
         }
         void OnDestroy()
         {

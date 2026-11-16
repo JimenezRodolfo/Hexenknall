@@ -19,7 +19,9 @@ namespace Labyrinth
         public float expansionAfter = 22, expansionDuration = 2.4f;
         public Material floorMaterial;
         public int PendingWaves=>waves;
-        public bool HasPendingWork=>waves>0 || busy || (expansionEnabled && expansions<maxExpansions);
+        public int PendingExpansions=>expansionEnabled ? Mathf.Max(0, maxExpansions-expansions) : 0;
+        public bool HasPendingWork=>waves>0 || busy || (expansionEnabled && expansions<maxExpansions) ||
+            (FeriaSession.Active && dynamicStage && index == 0);
         float elapsed, stageTime;
         bool busy;
         int index, expansions;
@@ -147,7 +149,7 @@ namespace Labyrinth
                 else G.ui.Toast("Cambio aplazado: la casilla está ocupada o es un paso necesario.");
             }
             var camera = Camera.main?Camera.main.GetComponent<OrbitCamera>():null;
-            if (camera)
+            if (camera && FeriaSession.RotateCamera)
             {
                 camera.angle+=90;
                 camera.elevation = index%2 == 0?52:62;

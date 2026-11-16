@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Linq;
 using System.Reflection;
 using UnityEditor;
@@ -68,13 +68,22 @@ namespace Labyrinth.Editor
                 root = null;
                 AssetDatabase.SaveAssets();
                 AssetDatabase.ImportAsset(path, ImportAssetOptions.ForceUpdate);
+                // La reimportación puede reemplazar las instancias nativas de los clips.
+                // Compara con los assets recargados, igual que el prefab recién importado.
+                idle = AssetDatabase.LoadAssetAtPath<AnimationClip>(folder+"/Saved_A.anim");
+                run = AssetDatabase.LoadAssetAtPath<AnimationClip>(folder+"/Saved_B.anim");
+                Check(idle && run, "saved clips must reload from their asset paths");
                 instance = UnityEngine.Object.Instantiate(AssetDatabase.LoadAssetAtPath<GameObject>(path));
                 visual = instance.GetComponent<CharacterVisual>();
                 visual.RefreshClips();
                 animation = visual.animationPlayer;
                 Check(visual.clips.Length == 2, "clip references must survive prefab serialization");
-                Check(animation.GetClip("Idle") == idle, "saved reference must restore Idle regardless of the asset name");
-                Check(animation.GetClip("Run") == run, "saved reference must restore Run regardless of the asset name");
+                Check(visual.clips.Single(c=>c.state == "Idle").clip == idle, "serialized Idle must retain its source asset");
+                Check(visual.clips.Single(c=>c.state == "Run").clip == run, "serialized Run must retain its source asset");
+                // Unity 6000.5 crea copias nativas al registrar un alias (Idle/Run).
+                // Comprueba su contenido y sus fuentes, no la identidad de esa copia.
+                Check(SameCurves(animation.GetClip("Idle"), idle), "saved reference must restore Idle curves regardless of the asset name");
+                Check(SameCurves(animation.GetClip("Run"), run), "saved reference must restore Run curves regardless of the asset name");
                 Check(animation["Idle"] != null && animation["Run"] != null, "both AnimationStates must exist after loading");
                 Check(AnimationUtility.GetCurveBindings(run).Any(b=>instance.transform.Find(b.path)), "running curve must bind to the loaded skeleton");
                 // Comprueba el caso de clips de movimiento faltantes.
@@ -100,6 +109,24 @@ namespace Labyrinth.Editor
                 if (empty)UnityEngine.Object.DestroyImmediate(empty);
                 if (AssetDatabase.IsValidFolder(folder))AssetDatabase.DeleteAsset(folder);
             }
+        }
+
+        static bool SameCurves(AnimationClip actual, AnimationClip expected)
+        {
+            if (!actual || !expected || actual.legacy != expected.legacy || !Mathf.Approximately(actual.length, expected.length))return false;
+            var expectedBindings = AnimationUtility.GetCurveBindings(expected);
+            var actualBindings = AnimationUtility.GetCurveBindings(actual);
+            if (actualBindings.Length != expectedBindings.Length)return false;
+            foreach (var binding in expectedBindings)
+            {
+                if (!actualBindings.Any(b=>b.path == binding.path && b.propertyName == binding.propertyName && b.type == binding.type))return false;
+                var a = AnimationUtility.GetEditorCurve(actual, binding).keys;
+                var e = AnimationUtility.GetEditorCurve(expected, binding).keys;
+                if (a.Length != e.Length)return false;
+                for (int i = 0; i < a.Length; i++)
+                    if (!Mathf.Approximately(a[i].time,e[i].time) || !Mathf.Approximately(a[i].value,e[i].value) || !a[i].inTangent.Equals(e[i].inTangent) || !a[i].outTangent.Equals(e[i].outTangent))return false;
+            }
+            return true;
         }
 
         // Revisa los estados de un personaje.

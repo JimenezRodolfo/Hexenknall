@@ -24,6 +24,15 @@ namespace Labyrinth
         float nextRay, nextSpecial, nextNormal, nextAim;
         bool bombQueued, rayQueued, aimQueued;
         GameObject marker;
+        bool shield;
+        public bool ConsumeShield()
+        {
+            if (!shield)return false;
+            shield = false;
+            GameDirector.I.ui.Toast("Escudo consumido: has evitado un golpe.");
+            GameDirector.I.sound.Play(SoundCue.CardChoose);
+            return true;
+        }
         int baseHealth, baseNormalRadius, baseCapacity, baseRayRange, baseSpecialRadius;
         float baseSpeed, baseImmunity, baseRayCooldown, baseSpecialCooldown;
 
@@ -41,6 +50,7 @@ namespace Labyrinth
             baseSpecialCooldown = specialCooldown;
             RefreshRunBonuses();
             health = maxHealth;
+            shield = FeriaSession.Active && RunProgress.Data.shieldChosen;
             base.Start();
         }
 
@@ -52,7 +62,12 @@ namespace Labyrinth
             bool adventure = g.stage>0;
             RayUnlocked = g.stage == 0 || d.rayUnlocked;
             SpecialUnlocked = g.stage == 0 || d.specialUnlocked;
-            maxHealth = baseHealth+(adventure?d.lifeBonus:0);
+            if (FeriaSession.Active)
+            {
+                RayUnlocked = g.stage != 1 || FeriaSession.Lesson >= 1;
+                SpecialUnlocked = g.stage == Campaign.FinalBoss;
+            }
+            maxHealth = (FeriaSession.Accessible ? g.accessibleHealth : baseHealth)+(adventure?d.lifeBonus:0);
             health = Mathf.Min(health, maxHealth);
             speed = baseSpeed*(adventure?Mathf.Max(.35f, 1+d.speedBonus-d.playerSlow):1);
             invulnerability = baseImmunity+(adventure?d.immunityBonus:0);
@@ -66,11 +81,11 @@ namespace Labyrinth
             if (!SpecialUnlocked)CancelAim();
             ClearQueuedActions();
         }
-        // 0 = Dificil (direcciones relativas a la camara).
-        // 1 = Muy dificil (direcciones fijas originales).
+        // Clave histórica conservada: solo orienta controles, no modifica el balance.
+        // 0 = cámara; 1 = ejes del tablero.
         public const string DifficultyPrefKey = "HEXENKNALL.Difficulty";
-        public static int Difficulty=>Mathf.Clamp(PlayerPrefs.GetInt(DifficultyPrefKey, 1), 0, 1);
-        public static string DifficultyName=>Difficulty == 0?"DIFICIL":"MUY DIFICIL";
+        public static int Difficulty=>FeriaSession.Active ? 0 : Mathf.Clamp(PlayerPrefs.GetInt(DifficultyPrefKey, 1), 0, 1);
+        public static string DifficultyName=>Difficulty == 0?"SEGÚN CÁMARA":"EJES DEL TABLERO";
 
         // Lee las teclas y adapta la dirección a la dificultad.
         public static Vector2Int Direction()
@@ -126,6 +141,8 @@ namespace Labyrinth
                 else if(!SpecialUnlocked)g.ui.Toast("C bloqueada: recupera la invocación celeste con una carta.");
             }
             if (Moving)return;
+            var direction = Direction();
+            if (direction != Vector2Int.zero)Face(direction);
             // Ejecuta las acciones pendientes al llegar al centro de la casilla.
             if (bombQueued && Time.time>=nextNormal)
             {
@@ -134,6 +151,8 @@ namespace Labyrinth
                 else if(g.PlaceBomb(cell, normalFuse, normalRadius, normalDamage, this))
                 {
                     nextNormal = Time.time+placementCooldown;
+                    FeriaSession.UsedZ();
+                    if (FeriaSession.Active)RayUnlocked = true;
                     if (visual)visual.Play("PlaceBomb", .3f, true);
                 }
             }
@@ -142,6 +161,7 @@ namespace Labyrinth
                 rayQueued = false;
                 nextRay = Time.time+rayCooldown;
                 MagicSeal.Create(g, cell, facing, chargeTime, rayRange, rayDamage);
+                FeriaSession.UsedX();
                 if (visual)visual.Play("CastSeal", .4f, true);
             }
             if (aimQueued)
@@ -150,9 +170,10 @@ namespace Labyrinth
                 Aiming = true;
                 target = cell;
                 marker = MagicVfx.Circle(g.board.World(target, .055f), MagicKind.Sky);
+                g.SetTime();
                 return;
             }
-            Step(Direction());
+            Step(direction);
         }
 
         // Mueve la mira de la habilidad C.
@@ -166,7 +187,7 @@ namespace Labyrinth
                 return;
             }
             var d = Direction();
-            if (d != Vector2Int.zero && Time.time>=nextAim)
+            if (d != Vector2Int.zero && Time.unscaledTime>=nextAim)
             {
                 var p = target+d;
                 if (g.board.Inside(p) && Mathf.Abs(p.x-cell.x)+Mathf.Abs(p.y-cell.y)<=aimRange)
@@ -174,7 +195,7 @@ namespace Labyrinth
                     target = p;
                     g.sound.Play(SoundCue.AimMove);
                 }
-                nextAim = Time.time+.14f;
+                nextAim = Time.unscaledTime+.14f;
             }
             marker.transform.position = g.board.World(target, .1f);
             MagicVfx.SetColor(marker, ValidTarget()?MagicVfx.ColorFor(MagicKind.Sky):Color.gray);
@@ -184,6 +205,7 @@ namespace Labyrinth
                 {
                     g.sound.Play(SoundCue.AimConfirm);
                     nextSpecial = Time.time+specialCooldown;
+                    FeriaSession.UsedC();
                     CancelAim();
                     if (visual)visual.Play("CastSpecial", .45f, true);
                 }
@@ -203,6 +225,7 @@ namespace Labyrinth
             Aiming = false;
             aimQueued = false;
             if (marker)Destroy(marker);
+            if (GameDirector.I)GameDirector.I.SetTime();
         }
 
         // Limpia las acciones pendientes.

@@ -32,7 +32,17 @@ namespace Labyrinth
         }
         int Seed(int salt)
         {
-            if (g.board.layoutSeed<0)return Guid.NewGuid().GetHashCode();
+            if (g.board.layoutSeed<0)
+            {
+                var d = RunProgress.Data;
+                if (d.layoutSeed == 0)
+                {
+                    d.layoutSeed = Guid.NewGuid().GetHashCode();
+                    if (d.layoutSeed == 0)d.layoutSeed = 1;
+                    if (RunProgress.HasSave)RunProgress.Save();
+                }
+                return unchecked(d.layoutSeed+g.stage*1009+salt*7919);
+            }
             return unchecked(g.board.layoutSeed+g.stage*1009+salt*7919);
         }
 

@@ -53,6 +53,16 @@ namespace Labyrinth
                 if (!bossCombat)bossCombat = gameObject.AddComponent<BossCombat>();
                 bossCombat.Bind(this);
             }
+            if (FeriaSession.Accessible)
+            {
+                var profile = GameDirector.I;
+                speed *= profile.accessibleEnemySpeed;
+                meleeWindup = Mathf.Max(profile.accessibleWindup, meleeWindup);
+                reactionMin = profile.accessibleReactionMin;
+                reactionMax = profile.accessibleReactionMax;
+                bombCooldown = Mathf.Max(5, bombCooldown);
+                phaseSpeedIncrease = 0;
+            }
             baseSpeed = speed;
             base.Start();
         }
@@ -63,6 +73,7 @@ namespace Labyrinth
             base.Update();
             var g = GameDirector.I;
             if (!g || !g.Combat || !g.player || g.player.health<=0)return;
+            if (g.Training || g.EncounterGrace)return;
             if (health<=0)
             {
                 state = State.Dead;
@@ -98,7 +109,7 @@ namespace Labyrinth
                 {
                     if (CanMelee(g.player) && g.player.OverlapsDamageCell(swingCell, .4f))
                     {
-                        g.player.Hit(1);
+                        g.player.Hit(1, false, "Golpe cuerpo a cuerpo de un guardián.");
                         g.sound.Play(SoundCue.MeleeImpact);
                     }
                     CancelSwing();
@@ -110,7 +121,7 @@ namespace Labyrinth
             if (boss)
             {
                 speed = baseSpeed+phase*phaseSpeedIncrease;
-                if (phase>0 && Time.time>=patternAt)
+                if (!FeriaSession.Accessible && phase>0 && Time.time>=patternAt)
                 {
                     patternAt = Time.time+patternCooldown;
                     g.StartCoroutine(g.Telegraph(g.player.cell, patternWarning, 1));

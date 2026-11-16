@@ -20,6 +20,7 @@ namespace Labyrinth
         float typed, toastUntil, shakeUntil, creditsStart;
         string toast = "";
         Vector2 historyScroll;
+        Vector2 settingsScroll;
         GUIStyle title, label, small, center, cardTitle, levelNumber, bossStatus;
         Texture2D logo, border, card;
         MenuBackdrop backdrop;
@@ -107,6 +108,13 @@ namespace Labyrinth
             if (!backdrop)backdrop = GetComponent<MenuBackdrop>();
             var k = Keyboard.current;
             if (k == null)return;
+            if (FeriaSession.Active && FeriaSession.Choosing)
+            {
+                if (k.digit1Key.wasPressedThisFrame)FeriaSession.Choose(0);
+                else if (k.digit2Key.wasPressedThisFrame)FeriaSession.Choose(1);
+                else if (k.digit3Key.wasPressedThisFrame)FeriaSession.Choose(2);
+                return;
+            }
             if (lines != null)
             {
                 typed+=Time.unscaledDeltaTime*45;
@@ -144,6 +152,7 @@ namespace Labyrinth
                 {
                     if (g.player && g.player.Aiming)return;
                     g.paused = !g.paused;
+                    InputConsumedFrame = Time.frameCount;
                     if (g.player)g.player.ClearQueuedActions();
                     g.SetTime();
                 }
@@ -155,7 +164,7 @@ namespace Labyrinth
                 selected = 0;
                 activate = false;
             }
-            int count = defeat?2:g.paused?4:g.stage<0?5:0;
+            int count = defeat || FeriaSession.Won?2:g.paused?4:g.stage<0?6:0;
             if (!settings && !credits && count>0)
             {
                 if (k.downArrowKey.wasPressedThisFrame || k.sKey.wasPressedThisFrame)
@@ -312,7 +321,30 @@ namespace Labyrinth
                 Exchange();
                 return;
             }
-            if (g.stage<0)MainMenu(g);
+            if (FeriaSession.Active && FeriaSession.Choosing)
+            {
+                Background();
+                GUI.Label(new Rect(90, 35, 1100, 60), "ELIGE UNA MEJORA GRATUITA", title);
+                GUI.Label(new Rect(90, 100, 1100, 50), "Sin maldición. Tu elección dura hasta terminar esta demo.", center);
+                var names = new[] { "Corazón del laberinto", "Flujo arcano", "Escudo de viaje" };
+                var descriptions = new[] { "+2 de vida máxima. Recuperas la vida al entrar en cada sala.",
+                    "X y C recargan un 16 % más rápido: coloca sellos con mayor frecuencia.",
+                    "Evita el primer golpe de cada sala. Además, +0,30 s de protección después de recibir daño." };
+                for (int i = 0; i < 3; i++)
+                {
+                    float x = 50+i*403;
+                    CardPanel(x, "CARTA DE FERIA", names[i], descriptions[i], CardRules.Tint(Rarity.Rare));
+                    if (Fancy(new Rect(x+30, 528, 310, 45), "Elegir ["+(i+1)+"]", "feria.card."+i))FeriaSession.Choose(i);
+                }
+            }
+            else if (FeriaSession.Active && FeriaSession.Won)
+            {
+                Background();
+                GUI.Label(new Rect(240, 130, 800, 150), "¡VICTORIA!\nHas roto el último sello", title);
+                if (Fancy(new Rect(444, 325, 390, 78), "Jugar otra demo", "feria.again", 0))StartDemo(g);
+                if (Fancy(new Rect(444, 430, 390, 78), "Volver al menú", "feria.menu", 1))g.Load("MainMenu");
+            }
+            else if (g.stage<0)MainMenu(g);
             else if(defeat)
             {
                 Background();
@@ -336,18 +368,20 @@ namespace Labyrinth
                 Art(logo, new Rect(310, 90, 660, 210));
                 GUI.Label(new Rect(350, 140, 580, 75), "HEXENKNALL", title);
             }
-            GUI.Label(new Rect(400, 333, 480, 32), "DIFICULTAD: "+PlayerController.DifficultyName, center);
-            if (Fancy(new Rect(497, 375, 286, 53), "Jugar", "menu.play", 0))g.NewGame();
-            if (Fancy(new Rect(497, 440, 286, 53), "Continuar", "menu.continue", 1, RunProgress.HasSave))g.Continue();
-            if (Fancy(new Rect(497, 505, 286, 53), "Ajustes", "menu.settings", 2))settings = true;
-            if (Fancy(new Rect(497, 570, 286, 53), "Salir", "menu.quit", 3))Application.Quit();
-            if (Fancy(new Rect(520, 644, 240, 38), "Créditos", "menu.credits", 4))
+            GUI.Label(new Rect(330, 310, 620, 32), "DEMO ACCESIBLE · Campaña: "+(FeriaSession.Accessible ? "Accesible" : "Original"), center);
+            if (Fancy(new Rect(450, 352, 380, 48), "Jugar demo de feria", "menu.demo", 0))StartDemo(g);
+            if (Fancy(new Rect(450, 410, 380, 44), "Nueva campaña", "menu.play", 1))g.NewGame();
+            if (Fancy(new Rect(450, 464, 380, 44), "Continuar campaña", "menu.continue", 2, RunProgress.HasSave))g.Continue();
+            if (Fancy(new Rect(450, 518, 380, 44), "Ajustes", "menu.settings", 3))settings = true;
+            if (Fancy(new Rect(450, 572, 380, 44), "Salir", "menu.quit", 4))Application.Quit();
+            if (Fancy(new Rect(520, 635, 240, 38), "Créditos", "menu.credits", 5))
             {
                 credits = true;
                 creditsStart = Time.unscaledTime;
             }
-            if (RunProgress.HasSave)GUI.Label(new Rect(820, 444, 320, 45), "Continuar: "+Campaign.Scene(RunProgress.ResumeStage(RunProgress.Data)), small);
+            if (RunProgress.HasSave)GUI.Label(new Rect(850, 464, 310, 45), "Continuar: "+Campaign.Scene(RunProgress.ResumeStage(RunProgress.Data)), small);
         }
+        void StartDemo(GameDirector g) { FeriaSession.Begin(); g.Load("Level01"); }
 
         // Dibuja la información durante el combate.
         void Hud(GameDirector g)
@@ -376,7 +410,11 @@ namespace Labyrinth
 
             Art(border, new Rect(0, 0, 1280, 720));
             GUI.matrix = matrix;
-            if (!string.IsNullOrEmpty(notice))GUI.Label(new Rect(180, 132, 920, 70), notice, title);
+            var events = g.GetComponent<StageEventManager>();
+            GUI.Label(new Rect(35, 117, 1210, 32), "Enemigos: "+g.Enemies+"  ·  Oleadas pendientes: "+(events ? events.PendingWaves : 0)+"  ·  Expansiones: "+(events ? events.PendingExpansions : 0), small);
+            if (FeriaSession.Active)GUI.Label(new Rect(100, 640, 1080, 65), FeriaSession.Objective, center);
+            if (p && !p.Aiming)GUI.Label(new Rect(180, 609, 920, 30), "Bombas: cubo turquesa = tuya · esfera roja = rival · Una cadena puede adelantar la explosión.", small);
+            if (!string.IsNullOrEmpty(notice))GUI.Label(new Rect(180, 155, 920, 70), notice, title);
             if (p && p.Aiming)GUI.Label(new Rect(250, 570, 780, 78), "WASD / flechas: apuntar  ·  Enter: invocar  ·  Esc: cancelar\nCírculo violeta: válido. Gris: casilla bloqueada.", center);
             if (g.oldFriend && g.oldFriend.CanTalk)GUI.Label(new Rect(330, 520, 620, 45), "[Z] Hablar con Old Friend", center);
         }
@@ -386,6 +424,7 @@ namespace Labyrinth
         void Defeat(GameDirector g)
         {
             if (!backdrop || !backdrop.Frame)GUI.Label(new Rect(300, 80, 680, 160), "GAME OVER\nHas caído en el laberinto", title);
+            if (!string.IsNullOrEmpty(g.deathCause))GUI.Label(new Rect(250, 245, 780, 65), g.deathCause, center);
             if (Fancy(new Rect(444, 325, 390, 78), "Reiniciar", "defeat.retry", 0))g.Load(Campaign.Scene(g.stage));
             if (Fancy(new Rect(444, 430, 390, 78), "Salir al menú", "defeat.menu", 1))g.Load("MainMenu");
         }
@@ -399,6 +438,7 @@ namespace Labyrinth
             if (Fancy(new Rect(455, 110, 370, 48), "Continuar", "pause.resume", 0))
             {
                 g.paused = false;
+                InputConsumedFrame = Time.frameCount;
                 g.SetTime();
             }
             if (Fancy(new Rect(455, 170, 370, 48), "Reiniciar nivel", "pause.restart", 1))g.Load(Campaign.Scene(g.stage));
@@ -513,20 +553,28 @@ namespace Labyrinth
         {
             Fill(new Rect(310, 45, 660, 630), new Color(.025f, .008f, .045f, .99f));
             GUILayout.BeginArea(new Rect(350, 65, 580, 540));
+            settingsScroll = GUILayout.BeginScrollView(settingsScroll);
             GUILayout.Label("HEXENKNALL · AJUSTES", title);
             GUILayout.Space(20);
             Slider("Volumen general", "Master", .65f);
             Slider("Música", "Music", .45f);
             Slider("Efectos", "SFX", .7f);
             Slider("Brillo", "Brightness", 0, -1, 1.5f);
-            GUILayout.Label("Dificultad", label);
-            int difficulty = PlayerController.Difficulty;
+            GUILayout.Label("Orientación de controles en campaña", label);
+            int difficulty = Mathf.Clamp(PlayerPrefs.GetInt(PlayerController.DifficultyPrefKey, 1), 0, 1);
             int chosen = GUILayout.SelectionGrid(difficulty, new[]
             {
-                "Difícil", "Muy difícil"
+                "Según cámara", "Ejes del tablero"
             }
             , 2, GUILayout.Height(34));
             if (chosen != difficulty)PlayerPrefs.SetInt(PlayerController.DifficultyPrefKey, chosen);
+            GUILayout.Label("Balance de campaña (se aplica al entrar al nivel)", small);
+            int balance = PlayerPrefs.GetInt("Hexenknall.Balance", 0);
+            int newBalance = GUILayout.SelectionGrid(balance, new[] { "Original", "Accesible" }, 2, GUILayout.Height(30));
+            if (newBalance != balance)PlayerPrefs.SetInt("Hexenknall.Balance", newBalance);
+            bool rotate = PlayerPrefs.GetInt("Hexenknall.RotateCamera", 1) == 1;
+            bool newRotate = GUILayout.Toggle(rotate, "Giros automáticos en campaña");
+            if (newRotate != rotate)PlayerPrefs.SetInt("Hexenknall.RotateCamera", newRotate ? 1 : 0);
             GUILayout.Label(chosen == 0?"Controles siguen el giro de la cámara.":"Controles fijos aunque gire la cámara.", small);
             GUILayout.Space(10);
             int old = Mathf.Clamp(PlayerPrefs.GetInt("Resolution", 1), 0, 2);
@@ -550,6 +598,7 @@ namespace Labyrinth
                 }
                 [next], value);
             }
+            GUILayout.EndScrollView();
             GUILayout.EndArea();
             if (Fancy(new Rect(445, 602, 390, 48), "Guardar y volver", "settings.back"))
             {

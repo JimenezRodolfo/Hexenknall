@@ -26,6 +26,13 @@ namespace Labyrinth
         public void Bind(EnemyController owner)
         {
             actor = owner;
+            if (FeriaSession.Accessible)
+            {
+                warningTime = Mathf.Max(1.15f, warningTime);
+                recoveryTime = Mathf.Max(1.5f, recoveryTime);
+                dashRange = 4;
+                dashSpeed = 7;
+            }
             nextDash = Time.time+4;
         }
 
@@ -84,6 +91,8 @@ namespace Labyrinth
                 return true;
             }
             if (!PhaseTwo || actor.Moving || Time.time<nextDash)return false;
+            // En Accesible una embestida nueva espera a que terminen bombas y llamas.
+            if (FeriaSession.Accessible && (g.board.bombs.Count>0 || g.board.hazards.Count>0))return false;
             Vector3 difference = g.player.Position-actor.Position;
             direction = Mathf.Abs(difference.x)>Mathf.Abs(difference.z)?new Vector2Int(difference.x>=0?1:-1, 0):new Vector2Int(0, difference.z>=0?1:-1);
             var path = Trace(g.board, actor.cell, direction, dashRange>0?dashRange:Mathf.Max(g.board.width, g.board.height));
@@ -118,7 +127,7 @@ namespace Labyrinth
             if (closest.sqrMagnitude<=.48f*.48f)
             {
                 hit = true;
-                if (target.Hit(1))GameDirector.I.sound.Play(SoundCue.BossDashImpact);
+                if (target.Hit(1, false, "Embestida del guardián: esquiva la línea marcada."))GameDirector.I.sound.Play(SoundCue.BossDashImpact);
             }
         }
 

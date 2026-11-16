@@ -10,6 +10,7 @@ namespace Labyrinth
         public float duration = .35f;
         public int damage = 1;
         public bool bombDamage;
+        public string cause;
         // Todas las casillas del mismo rayo comparten el registro de daño.
         public HashSet<GridActor> hitActors = new HashSet<GridActor>();
         GridBoard board;
@@ -43,7 +44,7 @@ namespace Labyrinth
                 // Solo revisa movimientos hechos mientras la llama estaba activa.
                 if (!a.OverlapsDamageCell(cell, .44f, Time.frameCount>bornFrame))continue;
                 hitActors.Add(a);
-                a.Hit(damage, bombDamage);
+                a.Hit(damage, bombDamage, cause);
             }
             duration-=Time.deltaTime;
             if (duration<=0)Destroy(gameObject);
@@ -58,7 +59,7 @@ namespace Labyrinth
             if (a.OverlapsDamageCell(cell, .44f))
             {
                 hitActors.Add(a);
-                a.Hit(damage, bombDamage);
+                a.Hit(damage, bombDamage, cause);
             }
         }
         void OnDestroy()

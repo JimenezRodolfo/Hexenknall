@@ -8,7 +8,7 @@ namespace Labyrinth
         public int width = 13, height = 11;
         [Header("Distribucion aleatoria (niveles normales)")]
         public bool randomizeLayout = true;
-        [Tooltip("-1: nueva semilla en cada entrada/reintento. >=0: reproducible.")]
+        [Tooltip("-1: semilla guardada por partida (se conserva al reintentar). >=0: semilla fija.")]
         public int layoutSeed = -1;
         [Range(0, .3f)]
         public float solidDensity = .14f;

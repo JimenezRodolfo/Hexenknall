@@ -7,6 +7,8 @@ namespace Labyrinth
     // Guarda la partida y el progreso de la campaña.
     public class RunData
     {
+        public int layoutSeed;
+        public bool shieldChosen;
         public int version = 2, stage;
         public int ledgerRevision;
         public bool oldFriendResolved, oldFriendVisited;
@@ -34,6 +36,7 @@ namespace Labyrinth
         {
             get
             {
+                if (FeriaSession.Active)return FeriaSession.Data;
                 if (data == null)
                 {
                     LegacySaveMigration.TryCopy(Key);
@@ -42,7 +45,8 @@ namespace Labyrinth
                     int before = data.stage;
                     Normalize(data);
                     if (before == Campaign.Ending && data.stage != Campaign.Ending) Debug.LogWarning("Guardado recuperado: el epilogo no tenia una victoria registrada. Continuar abrira "+Campaign.Scene(ResumeStage(data))+".");
-                    if (PlayerPrefs.HasKey(Key) || PlayerPrefs.HasKey(BackupKey))Write(data);
+                    // Leer el menú no debe rotar el respaldo ni escribir la campaña.
+                    // Las reparaciones se guardan al continuar o guardar la campaña.
                 }
                 return data;
             }
@@ -133,6 +137,7 @@ namespace Labyrinth
         {
             get
             {
+                if (FeriaSession.Active)return false;
                 LegacySaveMigration.TryCopy(Key);
                 return PlayerPrefs.HasKey(Key) || PlayerPrefs.HasKey(BackupKey);
             }
@@ -153,6 +158,7 @@ namespace Labyrinth
         // Guarda el estado actual de la partida.
         public static void Save()
         {
+            if (FeriaSession.Active)return;
             var d = Data;
             Normalize(d);
             Write(d);

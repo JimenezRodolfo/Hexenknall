@@ -17,6 +17,7 @@ namespace Labyrinth
         // Prepara la cámara al entrar al nivel.
         void Start()
         {
+            if (FeriaSession.Active) { angle = 0; elevation = 62; distance = 16; }
             cam = GetComponent<Camera>();
             cam.GetUniversalAdditionalCameraData().renderPostProcessing = true;
             var volume = gameObject.AddComponent<Volume>();
